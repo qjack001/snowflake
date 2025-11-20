@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>Snowflake Maker</title>
+		<style>
+			body
+			{
+				background: black;
+				color: white;
+				font-family: system-ui, sans-serif;
+				overflow-x: hidden;
+				display: flex;
+				flex-direction: row;
+				justify-content: center;
+				gap: 200px;
+			}
+			
+			canvas
+			{
+				border-radius: 100%;
+				box-shadow: 0 0 1px 1px rgb(255 255 255 / 10%);
+				position: absolute;
+				inset-block-start: 80px;
+				inset-inline-start: calc(50vw - 250px);
+			}
+
+			#show-grid:checked ~ #grid
+			{
+				opacity: 1;
+			}
+
+			#grid
+			{
+				opacity: 0;
+			}
+
+			label, button
+			{
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				justify-content: center;
+				
+				cursor: pointer;
+				width: 100px;
+				aspect-ratio: 1 / 1;
+				border-radius: 100%;
+				background: black;
+				color: transparent;
+				box-shadow: 0 0 0 0.5px rgb(255 255 255 / 30%);
+				border: none;
+				user-select: none;
+				overflow: hidden;
+				transform: translateY(600px);
+				stroke: white;
+				stroke-width: 1px;
+			}
+
+			input:checked + label,
+			button:active
+			{
+				background: white;
+				stroke: black;
+				stroke-width: 2px;
+			}
+
+
+			input
+			{
+				position: absolute;
+				top: 0;
+				left: 0;
+				opacity: 0;
+			}
+
+			footer
+			{
+				position: absolute;
+				inset-block-end: 0;
+				padding: 1.5rem 1ch;
+				opacity: 0.6;
+				font-size: 0.8rem;
+				z-index: -1;
+			}
+		</style>
+	</head>
+	<body>
+		<input type="checkbox" id="show-grid"/>
+		<label for="show-grid" title="Show grid">
+			<svg width="62" height="71" xmlns="http://www.w3.org/2000/svg">
+			    <g transform="translate(-0.5, 0)" stroke-dasharray="1,2">
+  			        <line x1="31.5" y1="8.8" x2="31.5" y2="71"/>
+  			        <line x1="0.85" y1="10.3" x2="62.1" y2="61.7"/>
+  			        <line x1="62.1" y1="10.3" x2="0.85" y2="61.7"/>
+  			    </g>
+			</svg>
+		</label>
+		<button id="clear-button" title="Clear snowflake">
+			<svg width="37" height="37" xmlns="http://www.w3.org/2000/svg">
+				<g transform="translate(-0.1, 0.4)">
+					<line x1="0.8" y1="0.3" x2="36.2" y2="35.7"/>
+					<line x1="36.4" y1="0.3" x2="1" y2="35.7"/>
+				</g>
+			</svg>
+		</button>
+		<canvas id="grid" width="500" height="500"></canvas>
+		<canvas id="snowflake" width="500" height="500"></canvas>
+		<footer>
+			Right-click → "Save Image As..." to download a photo of your snowflake.
+		</footer> 
+		<script>
+			const reflections = 6
+			const thickness = 8
+			const width = 500
+			const height = 500
+
+			const snowflakeElement = document.getElementById('snowflake')
+			const snowflakeCanvas = snowflakeElement.getContext('2d')
+			const grid = document.getElementById('grid').getContext('2d')
+			
+			for (let i = 0; i <= reflections; i++) {
+				rotateAboutCenter(grid, (2 * Math.PI) / (2 * reflections))
+				drawLine(grid, width/2, 0, width/2, height)
+				rotateAboutCenter(grid, (2 * Math.PI) / (2 * reflections))
+				drawLine(grid, width/2, 0, width/2, height)
+			}
+			
+			function plot(x, y) {
+				for (let i = 0; i <= reflections; i++) {
+					rotateAboutCenter(snowflakeCanvas, (2 * Math.PI) / reflections)
+					drawDot(snowflakeCanvas, x, y)
+					drawDot(snowflakeCanvas, width - x, y)
+				}
+			}
+
+			function clearSnowflake() {
+				snowflakeCanvas.clearRect(0, 0, width, height)
+			}
+						
+			function rotateAboutCenter(canvas, rads) {
+				canvas.translate(width/2, height/2)
+				canvas.rotate(rads)
+				canvas.translate(-width/2, -height/2)
+			}
+			
+			function drawDot(canvas, x, y) {
+				canvas.fillStyle = 'white'
+				canvas.fillRect(x - (thickness/2), y - (thickness/2), thickness, thickness)
+			}
+
+			function drawLine(canvas, x1, y1, x2, y2) {
+				canvas.strokeStyle = 'grey'
+				canvas.lineWidth = 1
+				canvas.setLineDash([1, 5])
+				canvas.beginPath()
+				canvas.moveTo(x1, y1)
+				canvas.lineTo(x2, y2)
+				canvas.stroke()
+			}
+
+			// event handlers
+			
+			let isDrawing = false
+
+			snowflakeElement.addEventListener('mousedown', (e) => {
+				isDrawing = true
+				plot(e.offsetX, e.offsetY)
+			})
+
+			snowflakeElement.addEventListener('mousemove', (e) => {
+				if (isDrawing) {
+					plot(e.offsetX, e.offsetY)
+				}
+			})
+
+			window.addEventListener('mouseup', () => {
+				isDrawing = false
+			})
+
+			document.getElementById('clear-button')
+				.addEventListener('click', clearSnowflake)
+		</script>
+	</body>
+</html>
